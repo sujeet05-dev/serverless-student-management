@@ -1,0 +1,49 @@
+name: Test and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download our code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install test dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Step 4: Run our unit tests
+      - name: Run tests
+        run: pytest tests/ -v
+
+      # Step 5: Install SAM CLI
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      # Step 6: Log into AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Step 7: Build the SAM application
+      - name: SAM Build
+        run: sam build
+
+      # Step 8: Deploy to AWS
+      - name: SAM Deploy
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
