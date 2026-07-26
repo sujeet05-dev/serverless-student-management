@@ -1,0 +1,222 @@
+{
+  "info": {
+    "name": "Student Management System",
+    "description": "Serverless CRUD API for managing student records. Built with AWS Lambda, API Gateway, and DynamoDB.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://YOUR_API_ID.execute-api.ap-south-1.amazonaws.com/dev",
+      "type": "string"
+    },
+    {
+      "key": "student_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Student",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"first_name\": \"Rahul\",\n  \"last_name\": \"Sharma\",\n  \"email\": \"rahul.sharma@example.com\",\n  \"age\": 21,\n  \"course\": \"Computer Science\",\n  \"enrollment_date\": \"2026-07-22\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/students",
+          "host": ["{{base_url}}"],
+          "path": ["students"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has student_id', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.student).to.have.property('student_id');",
+              "    pm.collectionVariables.set('student_id', jsonData.student.student_id);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "List All Students",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/students",
+          "host": ["{{base_url}}"],
+          "path": ["students"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has students array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('students');",
+              "    pm.expect(jsonData.students).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Get Student by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/students/{{student_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["students", "{{student_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has correct student_id', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.student.student_id).to.eql(pm.collectionVariables.get('student_id'));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Update Student",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course\": \"Data Science\",\n  \"age\": 22\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/students/{{student_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["students", "{{student_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Course was updated', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.student.course).to.eql('Data Science');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Delete Student",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/students/{{student_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["students", "{{student_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Deleted student returned', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.student).to.have.property('student_id');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Get Deleted Student (Expect 404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/students/{{student_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["students", "{{student_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 404 after deletion', function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

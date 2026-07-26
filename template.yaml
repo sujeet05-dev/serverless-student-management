@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Serverless Student Management System
+  
+  This template automatically deploys the DynamoDB database, the API Gateway, 
+  4 Lambda functions, and an Amazon Cognito User Pool for authentication.
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.11
+    Environment:
+      Variables:
+        DYNAMODB_TABLE_NAME: !Ref StudentsTable
+
+Resources:
+  # ==========================================
+  # 1. Authentication (Amazon Cognito)
+  # ==========================================
+  StudentUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: StudentManagementUsers
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false # Allow public sign up
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+
+  StudentUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref StudentUserPool
+      ClientName: StudentWebClient
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - openid
+        - email
+      AllowedOAuthFlowsUserPoolClient: true
+      # Must match our Python local server URL exactly
+      CallbackURLs:
+        - http://localhost:8000/
+      LogoutURLs:
+        - http://localhost:8000/
+
+  StudentUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref StudentUserPool
+      Domain: !Sub "educloud-app-${AWS::AccountId}"
+
+  # ==========================================
+  # 2. API Gateway (with Security Authorizer)
+  # ==========================================
+  StudentApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuth
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuth:
+            UserPoolArn: !GetAtt StudentUserPool.Arn
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+
+  # ==========================================
+  # 3. Our Database (DynamoDB)
+  # ==========================================
+  StudentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: student_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: student_id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  # ==========================================
+  # 4. Lambda Functions
+  # ==========================================
+  CreateStudentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.create_student.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StudentsTable
+      Events:
+        CreateEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref StudentApi
+            Path: /students
+            Method: post
+
+  GetStudentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.get_student.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StudentsTable
+      Events:
+        ListEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref StudentApi
+            Path: /students
+            Method: get
+        GetEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref StudentApi
+            Path: /students/{student_id}
+            Method: get
+
+  UpdateStudentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.update_student.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StudentsTable
+      Events:
+        UpdateEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref StudentApi
+            Path: /students/{student_id}
+            Method: put
+
+  DeleteStudentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.delete_student.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StudentsTable
+      Events:
+        DeleteEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref StudentApi
+            Path: /students/{student_id}
+            Method: delete
+
+Outputs:
+  ApiURL:
+    Description: "Your New API Gateway Invoke URL"
+    Value: !Sub "https://${StudentApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  CognitoDomainURL:
+    Description: "Your Cognito Hosted UI Domain (paste in app.js)"
+    Value: !Sub "https://educloud-app-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com"
+  CognitoClientID:
+    Description: "Your Cognito App Client ID (paste in app.js)"
+    Value: !Ref StudentUserPoolClient
