@@ -12,11 +12,81 @@
 <body>
     <!-- Login Overlay -->
     <div id="login-overlay" class="login-overlay">
-        <div class="login-box glass-panel">
-            <h2>🎓 EduCloud Secure Portal</h2>
-            <p>Please log in to manage students.</p>
-            <br>
-            <button id="login-btn" class="btn-primary">Login with AWS Cognito</button>
+        <div class="login-card glass-panel">
+            <div class="login-header">
+                <div class="login-title-row">
+                    <span class="login-logo-icon">🎓</span>
+                    <h1 class="login-title">EduCloud</h1>
+                </div>
+                <p class="login-subtitle">Serverless Student Management System</p>
+                <div class="security-tag">
+                    <span class="lock-icon">🔒</span> Secured by AWS Cognito & API Gateway
+                </div>
+            </div>
+
+            <!-- Native In-App Auth Box -->
+            <div class="auth-box">
+                <div class="auth-tabs">
+                    <button id="tab-signin" class="auth-tab active" type="button">Sign In</button>
+                    <button id="tab-signup" class="auth-tab" type="button">Create Account</button>
+                </div>
+
+                <!-- Sign In Form -->
+                <form id="form-signin" class="auth-form">
+                    <div class="input-group">
+                        <label for="signin-email">Email Address</label>
+                        <input type="email" id="signin-email" placeholder="admin@educloud.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signin-password">Password</label>
+                        <input type="password" id="signin-password" placeholder="••••••••" required>
+                    </div>
+                    <div id="signin-error" class="auth-alert error" style="display: none;"></div>
+                    <button type="submit" id="btn-submit-signin" class="btn-primary btn-login-hero">
+                        <span class="btn-text">Sign In to Dashboard ➔</span>
+                        <div class="loader" id="signin-loader" style="display: none;"></div>
+                    </button>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="form-signup" class="auth-form" style="display: none;">
+                    <div class="input-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" placeholder="admin@educloud.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-password">Password (Min 8 chars)</label>
+                        <input type="password" id="signup-password" placeholder="••••••••" required>
+                    </div>
+                    <div id="signup-error" class="auth-alert error" style="display: none;"></div>
+                    <button type="submit" id="btn-submit-signup" class="btn-primary btn-login-hero">
+                        <span class="btn-text">Create Account & Send Code ➔</span>
+                        <div class="loader" id="signup-loader" style="display: none;"></div>
+                    </button>
+                </form>
+
+                <!-- Confirm Verification Code Form -->
+                <form id="form-confirm" class="auth-form" style="display: none;">
+                    <p class="confirm-info">📩 Enter the 6-digit code sent to your email:</p>
+                    <div class="input-group">
+                        <label for="confirm-code">6-Digit Code</label>
+                        <input type="text" id="confirm-code" placeholder="123456" maxlength="6" required style="letter-spacing: 0.3em; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                    </div>
+                    <div id="confirm-error" class="auth-alert error" style="display: none;"></div>
+                    <button type="submit" id="btn-submit-confirm" class="btn-primary btn-login-hero">
+                        <span class="btn-text">Verify & Activate Account ➔</span>
+                        <div class="loader" id="confirm-loader" style="display: none;"></div>
+                    </button>
+                </form>
+
+                <div class="hosted-ui-link">
+                    <a href="#" id="hosted-ui-fallback">Or use AWS Hosted Login Page ↗</a>
+                </div>
+            </div>
+
+            <div class="login-footer-brand">
+                <span>AWS Lambda</span> • <span>DynamoDB</span> • <span>API Gateway</span>
+            </div>
         </div>
     </div>
 
@@ -32,11 +102,12 @@
                     <li class="active"><a href="#" id="nav-dashboard">Dashboard</a></li>
                     <li><a href="#" id="nav-students">Manage Students</a></li>
                 </ul>
-                <br>
-                <ul>
-                    <li><a href="#" id="logout-btn" style="color: #ef4444;">Logout</a></li>
-                </ul>
             </nav>
+            <div class="sidebar-footer">
+                <a href="#" id="logout-btn" class="logout-link">
+                    <span class="logout-icon">🚪</span> Logout
+                </a>
+            </div>
         </aside>
 
         <!-- Main Content Area -->

@@ -103,6 +103,34 @@ nav a:hover {
     color: var(--text-primary);
 }
 
+/* Sidebar Footer (Pinned to bottom-left) */
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logout-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #fca5a5 !important;
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: var(--transition);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.logout-link:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #ffffff !important;
+    border-color: rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
@@ -364,7 +392,7 @@ tbody tr:hover {
     background-color: var(--danger);
 }
 
-/* Login Overlay */
+/* Login Overlay & Sign-In Card */
 .login-overlay {
     position: fixed;
     top: 0;
@@ -373,34 +401,238 @@ tbody tr:hover {
     height: 100vh;
     background-color: var(--bg-color);
     background-image:
-        radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+        radial-gradient(at 10% 10%, hsla(253, 30%, 15%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 50%, hsla(225, 45%, 22%, 1) 0, transparent 60%),
+        radial-gradient(at 90% 90%, hsla(339, 50%, 20%, 1) 0, transparent 50%);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    padding: 1.5rem;
 }
 
-.login-box {
-    padding: 3rem;
-    border-radius: var(--border-radius);
+.login-card {
+    padding: 2.25rem 2rem 1.75rem 2rem;
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
     text-align: center;
-    max-width: 400px;
-    width: 90%;
+    background: rgba(30, 41, 59, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    animation: loginFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.login-box h2 {
-    margin-bottom: 0.5rem;
-    font-size: 1.75rem;
+@keyframes loginFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
-.login-box p {
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.login-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.login-logo-icon {
+    font-size: 1.8rem;
+}
+
+.login-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+}
+
+.login-subtitle {
     color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.security-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Native In-App Auth Box */
+.auth-box {
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+.auth-tabs {
+    display: flex;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 1.1rem;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.auth-tab.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.auth-form .input-group {
+    margin-bottom: 0.95rem;
+}
+
+.btn-login-hero {
+    width: 100%;
+    padding: 0.85rem;
+    font-size: 0.98rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-login-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.45);
+    background: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+}
+
+.login-footer-brand {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.72rem;
+    color: rgba(148, 163, 184, 0.5);
+    letter-spacing: 0.03em;
+    text-align: center;
+}
+
+/* Native In-App Auth Box */
+.auth-box {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.auth-tabs {
+    display: flex;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: 1.5rem;
 }
 
-/* Search Bar */
+.auth-tab {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.auth-tab.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.auth-form .input-group {
+    margin-bottom: 1.1rem;
+}
+
+.auth-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.83rem;
+    margin-bottom: 1.1rem;
+    line-height: 1.4;
+}
+
+.auth-alert.error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.auth-alert.success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+}
+
+.confirm-info {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+}
+
+.hosted-ui-link {
+    margin-top: 1.25rem;
+    text-align: center;
+}
+
+.hosted-ui-link a {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.hosted-ui-link a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
 .search-bar {
     position: relative;
     margin-bottom: 1.5rem;

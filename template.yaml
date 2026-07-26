@@ -37,6 +37,9 @@ Resources:
       UserPoolId: !Ref StudentUserPool
       ClientName: StudentWebClient
       GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
       SupportedIdentityProviders:
         - COGNITO
       AllowedOAuthFlows:

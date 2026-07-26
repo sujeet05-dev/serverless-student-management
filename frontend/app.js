@@ -33,6 +33,193 @@ let allStudents = []; // Stores all fetched students for filtering
 // AUTHENTICATION LOGIC
 // ==========================================
 let authToken = null;
+const COGNITO_REGION = "ap-south-1";
+
+// Auth Form Elements
+const tabSignin = document.getElementById('tab-signin');
+const tabSignup = document.getElementById('tab-signup');
+const formSignin = document.getElementById('form-signin');
+const formSignup = document.getElementById('form-signup');
+const formConfirm = document.getElementById('form-confirm');
+const signinError = document.getElementById('signin-error');
+const signupError = document.getElementById('signup-error');
+const confirmError = document.getElementById('confirm-error');
+const hostedUiFallback = document.getElementById('hosted-ui-fallback');
+
+let pendingUnconfirmedEmail = '';
+
+// Helper for Direct Cognito IDP API Calls
+async function cognitoRequest(targetAction, payload) {
+    try {
+        const response = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-amz-json-1.1',
+                'X-Amz-Target': `AWSCognitoIdentityProviderService.${targetAction}`
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        return { ok: response.ok, data };
+    } catch (err) {
+        return { ok: false, data: { message: err.message || "Network connection error" } };
+    }
+}
+
+// Auth Tab Switching
+if (tabSignin && tabSignup) {
+    tabSignin.addEventListener('click', () => {
+        tabSignin.classList.add('active');
+        tabSignup.classList.remove('active');
+        formSignin.style.display = 'block';
+        formSignup.style.display = 'none';
+        formConfirm.style.display = 'none';
+        hideAuthErrors();
+    });
+
+    tabSignup.addEventListener('click', () => {
+        tabSignup.classList.add('active');
+        tabSignin.classList.remove('active');
+        formSignup.style.display = 'block';
+        formSignin.style.display = 'none';
+        formConfirm.style.display = 'none';
+        hideAuthErrors();
+    });
+}
+
+function hideAuthErrors() {
+    if (signinError) signinError.style.display = 'none';
+    if (signupError) signupError.style.display = 'none';
+    if (confirmError) confirmError.style.display = 'none';
+}
+
+function showAuthError(element, message) {
+    if (!element) return;
+    element.textContent = message;
+    element.style.display = 'block';
+}
+
+// Native Sign In Handler
+if (formSignin) {
+    formSignin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAuthErrors();
+
+        const email = document.getElementById('signin-email').value.trim();
+        const password = document.getElementById('signin-password').value;
+        const loader = document.getElementById('signin-loader');
+        const submitBtnText = document.querySelector('#btn-submit-signin .btn-text');
+
+        if (loader) loader.style.display = 'inline-block';
+        if (submitBtnText) submitBtnText.style.display = 'none';
+
+        const res = await cognitoRequest('InitiateAuth', {
+            AuthFlow: 'USER_PASSWORD_AUTH',
+            ClientId: CLIENT_ID,
+            AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password
+            }
+        });
+
+        if (loader) loader.style.display = 'none';
+        if (submitBtnText) submitBtnText.style.display = 'inline';
+
+        if (res.ok && res.data.AuthenticationResult) {
+            const idToken = res.data.AuthenticationResult.IdToken;
+            localStorage.setItem('auth_token', idToken);
+            authToken = idToken;
+            showToast("Signed in successfully!", "success");
+            checkAuth();
+        } else {
+            const errMsg = res.data.__type ? res.data.message || "Invalid email or password" : "Login failed";
+            if (res.data.__type === "UserNotConfirmedException") {
+                pendingUnconfirmedEmail = email;
+                formSignin.style.display = 'none';
+                formConfirm.style.display = 'block';
+                showAuthError(confirmError, "Please enter the confirmation code sent to your email.");
+            } else {
+                showAuthError(signinError, errMsg);
+            }
+        }
+    });
+}
+
+// Native Sign Up Handler
+if (formSignup) {
+    formSignup.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAuthErrors();
+
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const loader = document.getElementById('signup-loader');
+        const submitBtnText = document.querySelector('#btn-submit-signup .btn-text');
+
+        if (loader) loader.style.display = 'inline-block';
+        if (submitBtnText) submitBtnText.style.display = 'none';
+
+        const res = await cognitoRequest('SignUp', {
+            ClientId: CLIENT_ID,
+            Username: email,
+            Password: password,
+            UserAttributes: [{ Name: 'email', Value: email }]
+        });
+
+        if (loader) loader.style.display = 'none';
+        if (submitBtnText) submitBtnText.style.display = 'inline';
+
+        if (res.ok) {
+            pendingUnconfirmedEmail = email;
+            formSignup.style.display = 'none';
+            formConfirm.style.display = 'block';
+            showToast("Account created! Check your email for the code.", "success");
+        } else {
+            const errMsg = res.data.message || "Sign up failed. Ensure password meets requirements.";
+            showAuthError(signupError, errMsg);
+        }
+    });
+}
+
+// Confirm Verification Code Handler
+if (formConfirm) {
+    formConfirm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAuthErrors();
+
+        const code = document.getElementById('confirm-code').value.trim();
+        const loader = document.getElementById('confirm-loader');
+        const submitBtnText = document.querySelector('#btn-submit-confirm .btn-text');
+
+        if (loader) loader.style.display = 'inline-block';
+        if (submitBtnText) submitBtnText.style.display = 'none';
+
+        const res = await cognitoRequest('ConfirmSignUp', {
+            ClientId: CLIENT_ID,
+            Username: pendingUnconfirmedEmail,
+            ConfirmationCode: code
+        });
+
+        if (loader) loader.style.display = 'none';
+        if (submitBtnText) submitBtnText.style.display = 'inline';
+
+        if (res.ok) {
+            showToast("Email verified! You can now sign in.", "success");
+            if (tabSignin) tabSignin.click();
+        } else {
+            const errMsg = res.data.message || "Invalid verification code.";
+            showAuthError(confirmError, errMsg);
+        }
+    });
+}
+
+// Hosted UI Fallback Handler
+if (hostedUiFallback) {
+    hostedUiFallback.addEventListener('click', (e) => {
+        e.preventDefault();
+        login();
+    });
+}
 
 function checkAuth() {
     // 1. Check if we just came back from the login page (token is in the URL hash)
@@ -40,7 +227,6 @@ function checkAuth() {
     const params = new URLSearchParams(hash);
 
     if (params.has('id_token')) {
-        // Save the token to local storage and clear the URL so it looks clean
         localStorage.setItem('auth_token', params.get('id_token'));
         window.history.replaceState(null, null, ' ');
     }
@@ -76,8 +262,7 @@ function logout() {
 // EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', checkAuth);
-loginBtn.addEventListener('click', login);
-logoutBtn.addEventListener('click', logout);
+if (logoutBtn) logoutBtn.addEventListener('click', logout);
 refreshBtn.addEventListener('click', fetchStudents);
 form.addEventListener('submit', handleAddStudent);
 searchInput.addEventListener('input', handleSearch);
