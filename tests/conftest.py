@@ -30,7 +30,17 @@ def dynamodb_table(aws_env):
         table = dynamodb.create_table(
             TableName="Students",
             KeySchema=[{"AttributeName": "student_id", "KeyType": "HASH"}],
-            AttributeDefinitions=[{"AttributeName": "student_id", "AttributeType": "S"}],
+            AttributeDefinitions=[
+                {"AttributeName": "student_id", "AttributeType": "S"},
+                {"AttributeName": "admin_id", "AttributeType": "S"}
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    "IndexName": "AdminIndex",
+                    "KeySchema": [{"AttributeName": "admin_id", "KeyType": "HASH"}],
+                    "Projection": {"ProjectionType": "ALL"}
+                }
+            ],
             BillingMode="PAY_PER_REQUEST",
         )
         table.meta.client.get_waiter("table_exists").wait(TableName="Students")
@@ -58,6 +68,13 @@ def api_event(sample_student_body):
             "body": json.dumps(body) if body else None,
             "pathParameters": path_params,
             "headers": {"Content-Type": "application/json"},
+            "requestContext": {
+                "authorizer": {
+                    "claims": {
+                        "sub": "test-admin-123"
+                    }
+                }
+            }
         }
         return event
     return _make_event

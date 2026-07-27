@@ -13,7 +13,8 @@ class TestDeleteStudent:
         """Insert a test student directly into the mocked table."""
         dynamodb_table.put_item(Item={
             "student_id": student_id,
-            "first_name": "Neha",
+            "admin_id": "test-admin-123",
+            "first_name": "Sneha",
             "last_name": "Gupta",
             "email": "neha@example.com",
             "age": 19,
