@@ -25,7 +25,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Fields the client is allowed to update (student_id, created_at are immutable)
-UPDATABLE_FIELDS = ["first_name", "last_name", "email", "age", "course", "enrollment_date"]
+UPDATABLE_FIELDS = ["first_name", "last_name", "email", "age", "course", "enrollment_date", "attendance_status", "attendance_records"]
 
 
 def lambda_handler(event, context):

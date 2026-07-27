@@ -23,7 +23,12 @@ const form = document.getElementById('add-student-form');
 const submitBtnText = document.querySelector('.btn-text');
 const submitLoader = document.getElementById('submit-loader');
 const tableBody = document.getElementById('students-table-body');
+const dashboardTableBody = document.getElementById('dashboard-students-table-body');
+const dashboardAttendanceTableBody = document.getElementById('dashboard-attendance-table-body');
+const attendanceTableBody = document.getElementById('attendance-table-body');
 const refreshBtn = document.getElementById('refresh-btn');
+const refreshAttendanceBtn = document.getElementById('refresh-attendance-btn');
+const attendanceDateInput = document.getElementById('attendance-date');
 const toast = document.getElementById('toast');
 const searchInput = document.getElementById('search-input');
 
@@ -67,10 +72,16 @@ async function cognitoRequest(targetAction, payload) {
 }
 
 // Auth Tab Switching
+const activeTabClasses = ['bg-surface-container-highest', 'text-on-surface', 'shadow-sm'];
+const inactiveTabClasses = ['text-on-surface-variant', 'hover:text-on-surface'];
+
 if (tabSignin && tabSignup) {
     tabSignin.addEventListener('click', () => {
-        tabSignin.classList.add('active');
-        tabSignup.classList.remove('active');
+        tabSignin.classList.add(...activeTabClasses);
+        tabSignin.classList.remove(...inactiveTabClasses);
+        tabSignup.classList.add(...inactiveTabClasses);
+        tabSignup.classList.remove(...activeTabClasses);
+        
         formSignin.style.display = 'block';
         formSignup.style.display = 'none';
         formConfirm.style.display = 'none';
@@ -78,8 +89,11 @@ if (tabSignin && tabSignup) {
     });
 
     tabSignup.addEventListener('click', () => {
-        tabSignup.classList.add('active');
-        tabSignin.classList.remove('active');
+        tabSignup.classList.add(...activeTabClasses);
+        tabSignup.classList.remove(...inactiveTabClasses);
+        tabSignin.classList.add(...inactiveTabClasses);
+        tabSignin.classList.remove(...activeTabClasses);
+        
         formSignup.style.display = 'block';
         formSignin.style.display = 'none';
         formConfirm.style.display = 'none';
@@ -108,7 +122,7 @@ if (formSignin) {
         const email = document.getElementById('signin-email').value.trim();
         const password = document.getElementById('signin-password').value;
         const loader = document.getElementById('signin-loader');
-        const submitBtnText = document.querySelector('#btn-submit-signin .btn-text');
+        const submitBtnText = document.querySelector('#btn-submit-signin span:first-child');
 
         if (loader) loader.style.display = 'inline-block';
         if (submitBtnText) submitBtnText.style.display = 'none';
@@ -154,7 +168,7 @@ if (formSignup) {
         const email = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value;
         const loader = document.getElementById('signup-loader');
-        const submitBtnText = document.querySelector('#btn-submit-signup .btn-text');
+        const submitBtnText = document.querySelector('#btn-submit-signup span:first-child');
 
         if (loader) loader.style.display = 'inline-block';
         if (submitBtnText) submitBtnText.style.display = 'none';
@@ -189,7 +203,7 @@ if (formConfirm) {
 
         const code = document.getElementById('confirm-code').value.trim();
         const loader = document.getElementById('confirm-loader');
-        const submitBtnText = document.querySelector('#btn-submit-confirm .btn-text');
+        const submitBtnText = document.querySelector('#btn-submit-confirm span:first-child');
 
         if (loader) loader.style.display = 'inline-block';
         if (submitBtnText) submitBtnText.style.display = 'none';
@@ -206,6 +220,7 @@ if (formConfirm) {
         if (res.ok) {
             showToast("Email verified! You can now sign in.", "success");
             if (tabSignin) tabSignin.click();
+            formConfirm.style.display = 'none';
         } else {
             const errMsg = res.data.message || "Invalid verification code.";
             showAuthError(confirmError, errMsg);
@@ -269,30 +284,78 @@ searchInput.addEventListener('input', handleSearch);
 
 // Sidebar navigation — switch between pages
 const navDashboard = document.getElementById('nav-dashboard');
+const navAdd = document.getElementById('nav-add');
+const navAttendance = document.getElementById('nav-attendance');
 const navStudents = document.getElementById('nav-students');
 const pageDashboard = document.getElementById('page-dashboard');
+const pageAdd = document.getElementById('page-add');
+const pageAttendance = document.getElementById('page-attendance');
 const pageManage = document.getElementById('page-manage');
 
 function showPage(page) {
     // Hide all pages
     pageDashboard.style.display = 'none';
+    pageAdd.style.display = 'none';
+    pageAttendance.style.display = 'none';
     pageManage.style.display = 'none';
-    // Remove active from all nav items
-    navDashboard.parentElement.classList.remove('active');
-    navStudents.parentElement.classList.remove('active');
+    
+    // Reset Nav Items
+    const activeNavClasses = ['bg-surface-container-highest/80', 'text-on-surface', 'font-semibold', 'translate-x-1'];
+    const inactiveNavClasses = ['text-on-surface-variant', 'hover:bg-surface-variant/50', 'hover:text-on-surface'];
+    
+    [navDashboard, navAdd, navAttendance, navStudents].forEach(nav => {
+        nav.classList.remove(...activeNavClasses);
+        nav.classList.add(...inactiveNavClasses);
+        nav.querySelector('.nav-indicator')?.classList.add('hidden');
+        nav.querySelector('.material-symbols-outlined')?.classList.replace('text-primary', 'group-hover:text-primary');
+    });
 
     if (page === 'dashboard') {
-        pageDashboard.style.display = 'block';
-        navDashboard.parentElement.classList.add('active');
+        pageDashboard.style.display = 'flex'; // It's a flex container in Tailwind
+        navDashboard.classList.remove(...inactiveNavClasses);
+        navDashboard.classList.add(...activeNavClasses);
+        navDashboard.querySelector('.nav-indicator')?.classList.remove('hidden');
+        navDashboard.querySelector('.material-symbols-outlined')?.classList.replace('group-hover:text-primary', 'text-primary');
+        fetchStudents(); // Refresh data when opening this page
+    } else if (page === 'add') {
+        pageAdd.style.display = 'flex';
+        navAdd.classList.remove(...inactiveNavClasses);
+        navAdd.classList.add(...activeNavClasses);
+        navAdd.querySelector('.nav-indicator')?.classList.remove('hidden');
+        navAdd.querySelector('.material-symbols-outlined')?.classList.replace('group-hover:text-primary', 'text-primary');
+    } else if (page === 'attendance') {
+        pageAttendance.style.display = 'flex';
+        navAttendance.classList.remove(...inactiveNavClasses);
+        navAttendance.classList.add(...activeNavClasses);
+        navAttendance.querySelector('.nav-indicator')?.classList.remove('hidden');
+        navAttendance.querySelector('.material-symbols-outlined')?.classList.replace('group-hover:text-primary', 'text-primary');
+        fetchStudents();
     } else {
-        pageManage.style.display = 'block';
-        navStudents.parentElement.classList.add('active');
+        pageManage.style.display = 'flex';
+        navStudents.classList.remove(...inactiveNavClasses);
+        navStudents.classList.add(...activeNavClasses);
+        navStudents.querySelector('.nav-indicator')?.classList.remove('hidden');
+        navStudents.querySelector('.material-symbols-outlined')?.classList.replace('group-hover:text-primary', 'text-primary');
         fetchStudents(); // Refresh data when opening this page
     }
 }
 
 navDashboard.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); });
+navAdd.addEventListener('click', (e) => { e.preventDefault(); showPage('add'); });
+navAttendance.addEventListener('click', (e) => { e.preventDefault(); showPage('attendance'); });
 navStudents.addEventListener('click', (e) => { e.preventDefault(); showPage('manage'); });
+if (refreshAttendanceBtn) refreshAttendanceBtn.addEventListener('click', fetchStudents);
+
+// Initialize Date Picker
+if (attendanceDateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    attendanceDateInput.value = today;
+    attendanceDateInput.addEventListener('change', () => {
+        if (allStudents.length > 0) {
+            renderStudents(allStudents);
+        }
+    });
+}
 
 // ==========================================
 // API FUNCTIONS
@@ -488,9 +551,6 @@ async function viewStudent(studentId) {
         document.getElementById('detail-email').textContent = currentStudent.email;
         document.getElementById('detail-age').textContent = currentStudent.age;
         document.getElementById('detail-course').textContent = currentStudent.course;
-        document.getElementById('detail-enrollment').textContent = currentStudent.enrollment_date || '—';
-        document.getElementById('detail-created').textContent = currentStudent.created_at || '—';
-        document.getElementById('detail-updated').textContent = currentStudent.updated_at || '—';
 
         // Show the modal in view mode
         switchToViewMode();
@@ -538,27 +598,112 @@ async function handleUpdateStudent(e) {
 
 function renderStudents(students) {
     tableBody.innerHTML = '';
+    if (dashboardTableBody) dashboardTableBody.innerHTML = '';
+    if (dashboardAttendanceTableBody) dashboardAttendanceTableBody.innerHTML = '';
+    if (attendanceTableBody) attendanceTableBody.innerHTML = '';
 
     if (students.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No students found. Add one above!</td></tr>`;
+        if (dashboardTableBody) dashboardTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-on-surface-variant">No students found.</td></tr>`;
+        if (dashboardAttendanceTableBody) dashboardAttendanceTableBody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-on-surface-variant">No students found.</td></tr>`;
+        if (attendanceTableBody) attendanceTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-on-surface-variant">No students found.</td></tr>`;
         return;
     }
 
     students.forEach(student => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${student.first_name} ${student.last_name}</strong></td>
-            <td>${student.course}</td>
-            <td>${student.email}</td>
-            <td>${student.age}</td>
-            <td>
+        // Render for Manage Students Table
+        const trManage = document.createElement('tr');
+        trManage.innerHTML = `
+            <td class="py-3 px-4 text-on-surface font-semibold">${student.first_name} ${student.last_name}</td>
+            <td class="py-3 px-4 text-on-surface-variant">${student.course}</td>
+            <td class="py-3 px-4 text-on-surface-variant">${student.email}</td>
+            <td class="py-3 px-4 text-on-surface-variant">${student.age}</td>
+            <td class="py-3 px-4">
                 <div class="action-btns">
                     <button class="btn-view" onclick="viewStudent('${student.student_id}')">View</button>
                     <button class="btn-danger" onclick="deleteStudent('${student.student_id}')">Delete</button>
                 </div>
             </td>
         `;
-        tableBody.appendChild(tr);
+        tableBody.appendChild(trManage);
+
+        // Render for Dashboard Read-Only Table
+        if (dashboardTableBody) {
+            const trDashboard = document.createElement('tr');
+            trDashboard.innerHTML = `
+                <td class="py-3 px-4 text-on-surface font-semibold">${student.first_name} ${student.last_name}</td>
+                <td class="py-3 px-4 text-on-surface-variant">${student.course}</td>
+                <td class="py-3 px-4 text-on-surface-variant">${student.email}</td>
+                <td class="py-3 px-4 text-on-surface-variant">${student.age}</td>
+            `;
+            dashboardTableBody.appendChild(trDashboard);
+        }
+
+        // Render for Dashboard Attendance Overview
+        if (dashboardAttendanceTableBody) {
+            const trOverview = document.createElement('tr');
+            const todayStr = new Date().toISOString().split('T')[0];
+            const records = student.attendance_records || {};
+            const todayStatus = records[todayStr] || null;
+
+            let statusBadge = '<span class="px-2 py-1 rounded bg-surface-container text-on-surface-variant text-xs">Not Marked</span>';
+            if (todayStatus === 'present') {
+                statusBadge = '<span class="px-2 py-1 rounded bg-[#22c55e]/20 text-[#22c55e] text-xs font-semibold">Present</span>';
+            } else if (todayStatus === 'absent') {
+                statusBadge = '<span class="px-2 py-1 rounded bg-[#ef4444]/20 text-[#ef4444] text-xs font-semibold">Absent</span>';
+            }
+
+            trOverview.innerHTML = `
+                <td class="py-3 px-4 text-on-surface font-semibold">${student.first_name} ${student.last_name}</td>
+                <td class="py-3 px-4 text-on-surface-variant">${student.course}</td>
+                <td class="py-3 px-4 text-center">${statusBadge}</td>
+            `;
+            dashboardAttendanceTableBody.appendChild(trOverview);
+        }
+
+        // Render for Attendance Table
+        if (attendanceTableBody) {
+            const trAttendance = document.createElement('tr');
+            
+            // Get current selected date
+            const selectedDate = attendanceDateInput ? attendanceDateInput.value : new Date().toISOString().split('T')[0];
+            
+            // Extract status for that specific date
+            const records = student.attendance_records || {};
+            const currentStatus = records[selectedDate] || null;
+
+            // Determine status display
+            let statusHTML = '<span class="text-on-surface-variant opacity-50">Not marked</span>';
+            let btnClass = 'bg-surface-container border-white/10 text-on-surface-variant hover:border-primary/50 hover:text-primary';
+            let btnIcon = 'check_box_outline_blank';
+            
+            if (currentStatus === 'present') {
+                statusHTML = '<span class="text-[#22c55e] font-semibold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">check_circle</span> Present</span>';
+                btnClass = 'bg-[#22c55e]/20 border-[#22c55e]/50 text-[#22c55e] hover:bg-[#22c55e]/30';
+                btnIcon = 'check_box';
+            } else if (currentStatus === 'absent') {
+                statusHTML = '<span class="text-[#ef4444] font-semibold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">cancel</span> Absent</span>';
+                btnClass = 'bg-[#ef4444]/20 border-[#ef4444]/50 text-[#ef4444] hover:bg-[#ef4444]/30';
+                btnIcon = 'disabled_by_default';
+            }
+
+            trAttendance.innerHTML = `
+                <td class="py-3 px-4 text-on-surface font-semibold">${student.first_name} ${student.last_name}</td>
+                <td class="py-3 px-4 text-on-surface-variant">${student.course}</td>
+                <td class="py-3 px-4 text-center">${statusHTML}</td>
+                <td class="py-3 px-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick="markAttendance('${student.student_id}', 'present')" class="w-8 h-8 rounded flex items-center justify-center border transition-colors ${currentStatus === 'present' ? btnClass : 'bg-surface-container border-white/10 text-on-surface-variant hover:border-[#22c55e]/50 hover:text-[#22c55e]'}">
+                            <span class="material-symbols-outlined text-xl">${currentStatus === 'present' ? 'check_box' : 'check_box_outline_blank'}</span>
+                        </button>
+                        <button onclick="markAttendance('${student.student_id}', 'absent')" class="w-8 h-8 rounded flex items-center justify-center border transition-colors ${currentStatus === 'absent' ? btnClass : 'bg-surface-container border-white/10 text-on-surface-variant hover:border-[#ef4444]/50 hover:text-[#ef4444]'}">
+                            <span class="material-symbols-outlined text-xl">${currentStatus === 'absent' ? 'disabled_by_default' : 'indeterminate_check_box'}</span>
+                        </button>
+                    </div>
+                </td>
+            `;
+            attendanceTableBody.appendChild(trAttendance);
+        }
     });
 }
 
@@ -577,15 +722,79 @@ function setFormLoading(isLoading) {
 function setTableLoading(isLoading) {
     if (isLoading) {
         refreshBtn.classList.add('pulse');
+        if (refreshAttendanceBtn) refreshAttendanceBtn.classList.add('pulse');
         tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">Loading students...</td></tr>`;
+        if (dashboardTableBody) dashboardTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-on-surface-variant">Loading students...</td></tr>`;
+        if (dashboardAttendanceTableBody) dashboardAttendanceTableBody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-on-surface-variant">Loading records...</td></tr>`;
+        if (attendanceTableBody) attendanceTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-on-surface-variant">Loading students...</td></tr>`;
     } else {
         refreshBtn.classList.remove('pulse');
+        if (refreshAttendanceBtn) refreshAttendanceBtn.classList.remove('pulse');
     }
 }
 
 function setTableError() {
     refreshBtn.classList.remove('pulse');
+    if (refreshAttendanceBtn) refreshAttendanceBtn.classList.remove('pulse');
     tableBody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color: #ef4444;">Failed to load data. Is your API URL correct?</td></tr>`;
+    if (dashboardTableBody) dashboardTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-error">Failed to load data.</td></tr>`;
+    if (dashboardAttendanceTableBody) dashboardAttendanceTableBody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-error">Failed to load data.</td></tr>`;
+    if (attendanceTableBody) attendanceTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-error">Failed to load data.</td></tr>`;
+}
+
+/**
+ * Handle marking attendance
+ */
+async function markAttendance(studentId, status) {
+    // Find the student locally
+    const student = allStudents.find(s => s.student_id === studentId);
+    if (!student) return;
+
+    // Get current date from picker
+    const selectedDate = attendanceDateInput ? attendanceDateInput.value : new Date().toISOString().split('T')[0];
+    if (!selectedDate) {
+        showToast("Please select a date first.", "error");
+        return;
+    }
+
+    // Initialize records if missing
+    if (!student.attendance_records) {
+        student.attendance_records = {};
+    }
+
+    // Save previous state for rollback on error
+    const prevStatus = student.attendance_records[selectedDate];
+    
+    // Optimistic UI update
+    student.attendance_records[selectedDate] = status;
+    renderStudents(allStudents);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ attendance_records: student.attendance_records })
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            logout();
+            return;
+        }
+
+        if (!response.ok) throw new Error("Failed to update attendance");
+        
+        showToast(`Marked ${student.first_name} as ${status} on ${selectedDate}`, "success");
+    } catch (error) {
+        console.error("Attendance update error:", error);
+        // Rollback
+        if (prevStatus) {
+            student.attendance_records[selectedDate] = prevStatus;
+        } else {
+            delete student.attendance_records[selectedDate];
+        }
+        renderStudents(allStudents);
+        showToast("Error updating attendance.", "error");
+    }
 }
 
 function showToast(message, type = 'success') {

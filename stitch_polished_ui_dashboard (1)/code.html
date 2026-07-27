@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduCloud - Student Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=Inter:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#0b1326",
+                        "outline": "#8c909f",
+                        "inverse-primary": "#005ac1",
+                        "on-surface-variant": "#c2c6d5",
+                        "surface-dim": "#0b1326",
+                        "on-error": "#690005",
+                        "primary": "#adc6ff",
+                        "surface-container-low": "#131b2e",
+                        "surface-tint": "#adc6ff",
+                        "surface-bright": "#31394d",
+                        "tertiary-container": "#00a574",
+                        "on-secondary-container": "#00566b",
+                        "error": "#ffb4ab",
+                        "on-secondary": "#003543",
+                        "surface-container-highest": "#2d3449",
+                        "on-primary": "#002e69",
+                        "primary-fixed": "#d8e2ff",
+                        "inverse-surface": "#dae2fd",
+                        "surface-container-high": "#222a3d",
+                        "secondary-fixed": "#b7eaff",
+                        "on-tertiary": "#003825",
+                        "on-primary-fixed": "#001a41",
+                        "on-tertiary-fixed-variant": "#005137",
+                        "on-primary-fixed-variant": "#004494",
+                        "secondary-fixed-dim": "#4cd6ff",
+                        "primary-container": "#4d8efe",
+                        "on-background": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "secondary": "#a6e6ff",
+                        "tertiary-fixed": "#68fcbf",
+                        "tertiary-fixed-dim": "#45dfa4",
+                        "on-secondary-fixed-variant": "#004e60",
+                        "outline-variant": "#424753",
+                        "secondary-container": "#14d1ff",
+                        "on-secondary-fixed": "#001f28",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#003120",
+                        "surface-container": "#171f33",
+                        "primary-fixed-dim": "#adc6ff",
+                        "error-container": "#93000a",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#00285c",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary-fixed": "#002114",
+                        "tertiary": "#45dfa4",
+                        "on-surface": "#dae2fd",
+                        "surface-container-lowest": "#060e20"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px",
+                        "card-padding": "32px",
+                        "input-padding": "12px 16px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-caps": ["Inter"],
+                        "status-label": ["Inter"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "status-label": ["11px", { "lineHeight": "1", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            color: theme('colors.on-background');
+            min-height: 100vh;
+        }
+        
+        .glass-panel {
+            background: rgba(23, 31, 51, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .input-glow:focus {
+            box-shadow: 0 0 0 2px rgba(77, 142, 254, 0.3);
+            border-color: theme('colors.primary-container');
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        .status-dot {
+            animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+<script src="https://unpkg.com/shader-web-background@1.0.3/dist/shader-web-background.min.js"></script></head>
+<body class="flex flex-col md:flex-row min-h-screen overflow-x-hidden antialiased">
+<!-- STITCH_SHADER_START:ANIMATION_7 class="fixed inset-0 w-full h-full -z-10" -->
+<div class="fixed inset-0 w-full h-full -z-10" style="display:block;">
+<canvas id="shader-canvas-ANIMATION_7" style="display:block;width:100%;height:100%"></canvas>
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas-ANIMATION_7');
+
+  // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
+  // This fires on initial layout and whenever the element is resized.
+  function syncSize() {
+    const w = canvas.clientWidth  || 1280;
+    const h = canvas.clientHeight || 720;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width  = w;
+      canvas.height = h;
+    }
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncSize).observe(canvas);
+  }
+  syncSize();
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+  const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+  const fs = `precision highp float;
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+varying vec2 v_texCoord;
+
+float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    vec2 shift = vec2(100.0);
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    for (int i = 0; i < 5; ++i) {
+        v += a * noise(p);
+        p = rot * p * 2.0 + shift;
+        a *= 0.5;
+    }
+    return v;
+}
+
+void main() {
+    vec2 uv = v_texCoord;
+    
+    // Create moving coordinates
+    vec2 q = vec2(0.0);
+    q.x = fbm(uv + 0.1 * u_time);
+    q.y = fbm(uv + vec2(1.0));
+
+    vec2 r = vec2(0.0);
+    r.x = fbm(uv + 1.0 * q + vec2(1.7, 9.2) + 0.15 * u_time);
+    r.y = fbm(uv + 1.0 * q + vec2(8.3, 2.8) + 0.126 * u_time);
+
+    float f = fbm(uv + r);
+
+    // Lumina Cloud Palette (Dark Surface to Primary Blue)
+    vec3 color_bg = vec3(0.043, 0.075, 0.149); // #0b1326
+    vec3 color_primary = vec3(0.259, 0.522, 0.957); // #4285f4
+    vec3 color_accent = vec3(0.192, 0.224, 0.302); // #31394d
+
+    vec3 color = mix(color_bg, color_accent, clamp((f * f) * 4.0, 0.0, 1.0));
+    color = mix(color, color_primary, clamp(length(q), 0.0, 1.0) * 0.4);
+    color = mix(color, vec3(0.5, 0.7, 1.0), clamp(length(r.x), 0.0, 1.0) * 0.1);
+
+    // Vignette
+    color *= 0.8 + 0.2 * smoothstep(0.8, 0.2, length(uv - 0.5));
+
+    gl_FragColor = vec4(color * (f * 1.1), 1.0);
+}`;
+  function cs(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(prog, 'a_position');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes = gl.getUniformLocation(prog, 'u_resolution');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  // u_mouse is in pixel coordinates matching u_resolution (ShaderToy convention).
+  // Shaders that need normalized coords should use: u_mouse / u_resolution.
+  let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+  window.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width && rect.height) {
+      const nx = (event.clientX - rect.left) / rect.width;
+      const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+      mouse.x = nx * canvas.width;
+      mouse.y = ny * canvas.height;
+    }
+  });
+
+  function render(t) {
+    if (typeof ResizeObserver === 'undefined') syncSize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (uTime) gl.uniform1f(uTime, t * 0.001);
+    if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+    if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  render(0);
+})();
+</script>
+</div>
+<!-- STITCH_SHADER_END:ANIMATION_7 -->
+<!-- Responsive Top Nav (Mobile only, suppressed SideNav elements) -->
+<nav class="md:hidden glass-panel border-b border-white/5 shadow-md flex justify-between items-center w-full px-margin-mobile py-4 sticky top-0 z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-tight">EduCloud</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+<!-- SideNavBar (Desktop) -->
+<aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 w-[280px] glass-panel border-r border-white/5 shadow-xl py-gutter space-y-unit z-40">
+<!-- Header -->
+<div class="px-6 pb-6 border-b border-white/5 mb-4">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-primary text-3xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">EduCloud</h1>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant ml-10">Serverless Admin</p>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">dashboard</span>
+<span class="font-body-lg text-body-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 bg-surface-container-highest/80 text-on-surface rounded-lg px-4 py-3 font-semibold translate-x-1 duration-150 relative" href="#">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></div>
+<span class="material-symbols-outlined text-primary">group</span>
+<span class="font-body-lg text-body-lg">Manage Students</span>
+</a>
+</nav>
+<!-- Footer -->
+<div class="px-4 mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-lg text-body-lg">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col md:ml-[280px] min-h-screen">
+<!-- Topbar/Header section -->
+<header class="w-full max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-8 pt-6 md:pt-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Student Management System</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Manage enrollments, records, and access.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 bg-tertiary/10 border border-tertiary/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
+<div class="w-2 h-2 rounded-full bg-tertiary status-dot"></div>
+<span class="font-status-label text-status-label text-tertiary">API Online</span>
+</div>
+<div class="flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-full border border-white/5 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-secondary">lock</span>
+<span class="font-status-label text-status-label text-on-surface-variant">Secured by AWS</span>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="w-full max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop pb-12 flex-1 flex flex-col items-center justify-center">
+<!-- Registration Form Card -->
+<div class="glass-panel w-full max-w-lg rounded-xl shadow-2xl p-card-padding">
+<div class="flex items-center gap-3 mb-8 border-b border-white/5 pb-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center border border-primary-container/30">
+<span class="material-symbols-outlined text-primary-container">person_add</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Register New Student</h3>
+<p class="font-body-sm text-body-sm text-outline">Enter details to provision account</p>
+</div>
+</div>
+<form class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="firstName">FIRST NAME</label>
+<input class="w-full bg-surface-container-highest/30 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-3 text-on-surface font-body-sm focus:outline-none input-glow transition-all duration-200 placeholder-outline" id="firstName" placeholder="Jane" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="lastName">LAST NAME</label>
+<input class="w-full bg-surface-container-highest/30 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-3 text-on-surface font-body-sm focus:outline-none input-glow transition-all duration-200 placeholder-outline" id="lastName" placeholder="Doe" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="email">EMAIL ADDRESS</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-lg">mail</span>
+<input class="w-full bg-surface-container-highest/30 backdrop-blur-sm border border-white/10 rounded-lg pl-11 pr-4 py-3 text-on-surface font-body-sm focus:outline-none input-glow transition-all duration-200 placeholder-outline" id="email" placeholder="jane.doe@university.edu" type="email"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="space-y-2 md:col-span-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="age">AGE</label>
+<input class="w-full bg-surface-container-highest/30 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-3 text-on-surface font-body-sm focus:outline-none input-glow transition-all duration-200 placeholder-outline" id="age" max="99" min="16" placeholder="20" type="number"/>
+</div>
+<div class="space-y-2 md:col-span-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="course">COURSE</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest/30 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-3 text-on-surface font-body-sm focus:outline-none input-glow transition-all duration-200 appearance-none cursor-pointer" id="course">
+<option class="text-outline" disabled="" selected="" value="">Select a course...</option>
+<option class="bg-surface-container text-on-surface" value="cs101">Computer Science 101</option>
+<option class="bg-surface-container text-on-surface" value="eng201">Engineering Mathematics</option>
+<option class="bg-surface-container text-on-surface" value="ds301">Data Structures</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full bg-gradient-to-r from-primary-container to-secondary-container text-on-primary-container font-body-lg text-body-lg font-semibold py-3.5 px-6 rounded-lg hover:shadow-[0_0_15px_rgba(77,142,254,0.4)] transition-all duration-300 flex items-center justify-center gap-2 group" type="button">
+<span>Add Student</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+</main>
+</body></html>
