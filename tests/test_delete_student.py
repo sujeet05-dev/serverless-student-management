@@ -14,7 +14,7 @@ class TestDeleteStudent:
         dynamodb_table.put_item(Item={
             "student_id": student_id,
             "admin_id": "test-admin-123",
-            "first_name": "Sneha",
+            "first_name": "Neha",
             "last_name": "Gupta",
             "email": "neha@example.com",
             "age": 19,
