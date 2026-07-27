@@ -43,13 +43,20 @@ def lambda_handler(event, context):
     if not student_id:
         return bad_request("Missing student_id in path")
 
+    # ── Extract admin_id ─────────────────────
+    admin_id = event.get("requestContext", {}).get("authorizer", {}).get("claims", {}).get("sub")
+    if not admin_id:
+        logger.error("Could not find Cognito sub in authorizer claims")
+        return internal_error("Could not determine user identity")
+
     # ── Delete from DynamoDB ─────────────────
     try:
         table = get_table()
         response = table.delete_item(
             Key={"student_id": student_id},
-            # ConditionExpression ensures the item exists before deleting
-            ConditionExpression="attribute_exists(student_id)",
+            # ConditionExpression ensures the item exists AND belongs to the current user
+            ConditionExpression="attribute_exists(student_id) AND admin_id = :admin_id",
+            ExpressionAttributeValues={":admin_id": admin_id},
             ReturnValues="ALL_OLD",
         )
     except ClientError as exc:

@@ -50,6 +50,12 @@ def lambda_handler(event, context):
     if not student_id:
         return bad_request("Missing student_id in path")
 
+    # ── Extract admin_id ─────────────────────
+    admin_id = event.get("requestContext", {}).get("authorizer", {}).get("claims", {}).get("sub")
+    if not admin_id:
+        logger.error("Could not find Cognito sub in authorizer claims")
+        return internal_error("Could not determine user identity")
+
     # ── Parse request body ───────────────────
     try:
         body = json.loads(event.get("body", "{}") or "{}")
@@ -81,6 +87,8 @@ def lambda_handler(event, context):
 
     update_expression = "SET " + ", ".join(update_parts)
 
+    expr_attr_values[":admin_id"] = admin_id
+
     # ── Execute the update ───────────────────
     try:
         table = get_table()
@@ -89,8 +97,8 @@ def lambda_handler(event, context):
             UpdateExpression=update_expression,
             ExpressionAttributeNames=expr_attr_names,
             ExpressionAttributeValues=expr_attr_values,
-            # ConditionExpression ensures the item exists before updating
-            ConditionExpression="attribute_exists(student_id)",
+            # ConditionExpression ensures the item exists AND belongs to the current user
+            ConditionExpression="attribute_exists(student_id) AND admin_id = :admin_id",
             ReturnValues="ALL_NEW",
         )
     except ClientError as exc:

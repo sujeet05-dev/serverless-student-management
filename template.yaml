@@ -98,9 +98,18 @@ Resources:
       AttributeDefinitions:
         - AttributeName: student_id
           AttributeType: S
+        - AttributeName: admin_id
+          AttributeType: S
       KeySchema:
         - AttributeName: student_id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: AdminIndex
+          KeySchema:
+            - AttributeName: admin_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
       BillingMode: PAY_PER_REQUEST
 
   # ==========================================

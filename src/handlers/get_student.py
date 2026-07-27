@@ -7,6 +7,7 @@ Handles GET /students and GET /students/{student_id} requests.
 
 import logging
 
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 import sys
@@ -47,18 +48,23 @@ def lambda_handler(event, context):
     # ── Determine single vs. list mode ───────
     path_params = event.get("pathParameters") or {}
     student_id = path_params.get("student_id")
+    
+    admin_id = event.get("requestContext", {}).get("authorizer", {}).get("claims", {}).get("sub")
+    if not admin_id:
+        logger.error("Could not find Cognito sub in authorizer claims")
+        return internal_error("Could not determine user identity")
 
     if student_id:
-        return _get_single_student(table, student_id)
-    return _list_all_students(table)
+        return _get_single_student(table, student_id, admin_id)
+    return _list_all_students(table, admin_id)
 
 
 # ──────────────────────────────────────────────
 # Private helpers
 # ──────────────────────────────────────────────
 
-def _get_single_student(table, student_id):
-    """Fetch a single student by student_id."""
+def _get_single_student(table, student_id, admin_id):
+    """Fetch a single student by student_id and verify ownership."""
     try:
         response = table.get_item(Key={"student_id": student_id})
     except ClientError as exc:
@@ -66,29 +72,32 @@ def _get_single_student(table, student_id):
         return internal_error("Failed to retrieve student record")
 
     student = response.get("Item")
-    if not student:
-        logger.info("Student not found: %s", student_id)
+    if not student or student.get("admin_id") != admin_id:
+        logger.info("Student not found or access denied: %s", student_id)
         return not_found(f"Student with ID '{student_id}' not found")
 
     logger.info("Student retrieved: %s", student_id)
     return success({"student": student})
 
 
-def _list_all_students(table):
-    """Scan the table and return all students, handling DynamoDB pagination."""
+def _list_all_students(table, admin_id):
+    """Query the AdminIndex and return all students belonging to this admin."""
     students = []
     try:
-        scan_kwargs = {}
+        query_kwargs = {
+            "IndexName": "AdminIndex",
+            "KeyConditionExpression": Key("admin_id").eq(admin_id)
+        }
         while True:
-            response = table.scan(**scan_kwargs)
+            response = table.query(**query_kwargs)
             students.extend(response.get("Items", []))
 
-            # DynamoDB returns max 1 MB per scan; if there's more data,
-            # LastEvaluatedKey is present and we must continue scanning.
+            # DynamoDB returns max 1 MB per query; if there's more data,
+            # LastEvaluatedKey is present and we must continue querying.
             last_key = response.get("LastEvaluatedKey")
             if not last_key:
                 break
-            scan_kwargs["ExclusiveStartKey"] = last_key
+            query_kwargs["ExclusiveStartKey"] = last_key
 
     except ClientError as exc:
         logger.error("DynamoDB scan failed: %s", exc)

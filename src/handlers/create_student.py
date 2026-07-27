@@ -55,10 +55,17 @@ def lambda_handler(event, context):
         logger.warning("Missing required fields: %s", missing)
         return bad_request(f"Missing required fields: {', '.join(missing)}")
 
+    # ── Extract Admin ID from Auth Token ─────
+    admin_id = event.get("requestContext", {}).get("authorizer", {}).get("claims", {}).get("sub")
+    if not admin_id:
+        logger.error("Could not find Cognito sub in authorizer claims")
+        return internal_error("Could not determine user identity. Ensure API Gateway has a Cognito Authorizer.")
+
     # ── Build the student record ─────────────
     now = datetime.now(timezone.utc).isoformat()
     student = {
         "student_id": str(uuid.uuid4()),
+        "admin_id": admin_id,
         "first_name": str(body["first_name"]).strip(),
         "last_name": str(body["last_name"]).strip(),
         "email": str(body["email"]).strip().lower(),
